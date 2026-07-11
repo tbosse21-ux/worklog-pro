@@ -2,7 +2,6 @@ import '../models/customer.dart';
 import 'database_service.dart';
 
 class CustomerRepository {
-
   Future<void> insert(Customer customer) async {
     final db = await DatabaseService.database;
 
@@ -20,9 +19,18 @@ class CustomerRepository {
       orderBy: 'name ASC',
     );
 
-    return maps
-        .map((e) => Customer.fromMap(e))
-        .toList();
+    return maps.map((e) => Customer.fromMap(e)).toList();
+  }
+
+  Future<void> update(Customer customer) async {
+    final db = await DatabaseService.database;
+
+    await db.update(
+      'customers',
+      customer.toMap(),
+      where: 'id = ?',
+      whereArgs: [customer.id],
+    );
   }
 
   Future<void> delete(int id) async {

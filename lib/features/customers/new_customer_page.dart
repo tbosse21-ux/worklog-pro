@@ -1,17 +1,35 @@
 import 'package:flutter/material.dart';
+
 import '../../database/customer_repository.dart';
 import '../../models/customer.dart';
 
 class NewCustomerPage extends StatefulWidget {
-  const NewCustomerPage({super.key});
+  final Customer? customer;
+
+  const NewCustomerPage({
+    super.key,
+    this.customer,
+  });
 
   @override
   State<NewCustomerPage> createState() => _NewCustomerPageState();
 }
 
 class _NewCustomerPageState extends State<NewCustomerPage> {
-  final TextEditingController _nameController = TextEditingController();
   final CustomerRepository _repository = CustomerRepository();
+  final TextEditingController _nameController = TextEditingController();
+
+  bool get _isEdit => widget.customer != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (_isEdit) {
+      _nameController.text = widget.customer!.name;
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -19,7 +37,9 @@ class _NewCustomerPageState extends State<NewCustomerPage> {
   }
 
   Future<void> _saveCustomer() async {
-    if (_nameController.text.trim().isEmpty) {
+    final name = _nameController.text.trim();
+
+    if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Bitte Kunde / Firma eingeben."),
@@ -28,18 +48,30 @@ class _NewCustomerPageState extends State<NewCustomerPage> {
       return;
     }
 
-    // Später speichern wir hier in der Datenbank
-    Navigator.pop(
-      context,
-      _nameController.text.trim(),
-    );
+    if (_isEdit) {
+      await _repository.update(
+        widget.customer!.copyWith(
+          name: name,
+        ),
+      );
+    } else {
+      await _repository.insert(
+        Customer(name: name),
+      );
+    }
+
+    if (!mounted) return;
+
+    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Neuer Kunde"),
+        title: Text(
+          _isEdit ? "Kunde bearbeiten" : "Neuer Kunde",
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -53,17 +85,15 @@ class _NewCustomerPageState extends State<NewCustomerPage> {
                 border: OutlineInputBorder(),
               ),
             ),
-
             const Spacer(),
-
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
                 onPressed: _saveCustomer,
-                child: const Text(
-                  "Speichern",
-                  style: TextStyle(fontSize: 18),
+                child: Text(
+                  _isEdit ? "Änderungen speichern" : "Speichern",
+                  style: const TextStyle(fontSize: 18),
                 ),
               ),
             ),
