@@ -19,14 +19,45 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
-        await db.execute('''
+        await db.execute("""
           CREATE TABLE customers(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL
           )
-        ''');
+        """);
+
+        await db.execute("""
+          CREATE TABLE work_reports(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            customerId INTEGER NOT NULL,
+            constructionSite TEXT NOT NULL,
+            startTime TEXT NOT NULL,
+            endTime TEXT NOT NULL,
+            breakMinutes INTEGER NOT NULL,
+            activity TEXT NOT NULL,
+            FOREIGN KEY(customerId) REFERENCES customers(id)
+          )
+        """);
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute("""
+            CREATE TABLE work_reports(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              date TEXT NOT NULL,
+              customerId INTEGER NOT NULL,
+              constructionSite TEXT NOT NULL,
+              startTime TEXT NOT NULL,
+              endTime TEXT NOT NULL,
+              breakMinutes INTEGER NOT NULL,
+              activity TEXT NOT NULL,
+              FOREIGN KEY(customerId) REFERENCES customers(id)
+            )
+          """);
+        }
       },
     );
   }
