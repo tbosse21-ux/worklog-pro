@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-class ReportsPage extends StatelessWidget {
-  const ReportsPage({super.key});
+class NewWorkReportPage extends StatelessWidget {
+  const NewWorkReportPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Berichte"),
+        title: const Text("Neuer Arbeitsbericht"),
       ),
       body: const Center(
         child: Text(
-          "Hier erscheinen später alle Arbeitsberichte.",
+          "Hier entsteht später der Arbeitsbericht.",
           style: TextStyle(fontSize: 18),
         ),
       ),

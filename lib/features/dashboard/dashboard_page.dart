@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../customers/customers_page.dart';
+import '../reports/reports_page.dart';
+import '../settings/settings_page.dart';
+import '../work_reports/new_work_report_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -14,7 +18,6 @@ class DashboardPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-
           const SizedBox(height: 20),
 
           const Text(
@@ -28,35 +31,35 @@ class DashboardPage extends StatelessWidget {
           const SizedBox(height: 30),
 
           _menuCard(
-            Icons.description,
-            "Arbeitsbericht erstellen",
-            "Neuen Bericht beginnen",
+            context,
+            icon: Icons.description,
+            title: "Arbeitsbericht erstellen",
+            subtitle: "Neuen Bericht beginnen",
+            page: const NewWorkReportPage(),
           ),
 
           _menuCard(
-            Icons.folder,
-            "Berichte",
-            "Vorhandene Berichte ansehen",
+            context,
+            icon: Icons.folder,
+            title: "Berichte",
+            subtitle: "Vorhandene Berichte ansehen",
+            page: const ReportsPage(),
           ),
 
           _menuCard(
-             Icons.people,
-             "Kunden",
-             "Kunden verwalten",
-             onTap: () {
-               Navigator.push(
-                 context,
-                 MaterialPageRoute(
-                   builder: (_) => const CustomersPage(),
-                 ),
-               );
-             },
-           ),
+            context,
+            icon: Icons.people,
+            title: "Kunden",
+            subtitle: "Kunden verwalten",
+            page: const CustomersPage(),
+          ),
 
           _menuCard(
-            Icons.settings,
-            "Einstellungen",
-            "Sprache und Optionen",
+            context,
+            icon: Icons.settings,
+            title: "Einstellungen",
+            subtitle: "Sprache und Optionen",
+            page: const SettingsPage(),
           ),
 
           const SizedBox(height: 25),
@@ -64,7 +67,9 @@ class DashboardPage extends StatelessWidget {
           const Center(
             child: Text(
               "Version 0.1.0",
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(
+                color: Colors.grey,
+              ),
             ),
           ),
         ],
@@ -73,17 +78,20 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _menuCard(
-      IconData icon,
-      String title,
-      String subtitle, {
-        VoidCallback? onTap,
-        }) 
-        {
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Widget page,
+  }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
       child: ListTile(
-        leading: Icon(icon, size: 34),
+        leading: Icon(
+          icon,
+          size: 34,
+        ),
         title: Text(
           title,
           style: const TextStyle(
@@ -92,7 +100,14 @@ class DashboardPage extends StatelessWidget {
         ),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: onTap,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => page,
+            ),
+          );
+        },
       ),
     );
   }

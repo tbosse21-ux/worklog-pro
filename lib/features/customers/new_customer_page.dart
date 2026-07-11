@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../database/customer_repository.dart';
+import '../../models/customer.dart';
 
 class NewCustomerPage extends StatefulWidget {
   const NewCustomerPage({super.key});
@@ -9,14 +11,14 @@ class NewCustomerPage extends StatefulWidget {
 
 class _NewCustomerPageState extends State<NewCustomerPage> {
   final TextEditingController _nameController = TextEditingController();
-
+  final CustomerRepository _repository = CustomerRepository();
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
   }
 
-  void _saveCustomer() {
+  Future<void> _saveCustomer() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
