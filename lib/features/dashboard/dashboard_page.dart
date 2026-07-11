@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../customers/customers_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -39,10 +40,18 @@ class DashboardPage extends StatelessWidget {
           ),
 
           _menuCard(
-            Icons.people,
-            "Kunden",
-            "Kunden verwalten",
-          ),
+             Icons.people,
+             "Kunden",
+             "Kunden verwalten",
+             onTap: () {
+               Navigator.push(
+                 context,
+                 MaterialPageRoute(
+                   builder: (_) => const CustomersPage(),
+                 ),
+               );
+             },
+           ),
 
           _menuCard(
             Icons.settings,
@@ -66,8 +75,10 @@ class DashboardPage extends StatelessWidget {
   Widget _menuCard(
       IconData icon,
       String title,
-      String subtitle,
-      ) {
+      String subtitle, {
+        VoidCallback? onTap,
+        }) 
+        {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -81,7 +92,7 @@ class DashboardPage extends StatelessWidget {
         ),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: () {},
+        onTap: onTap,
       ),
     );
   }
