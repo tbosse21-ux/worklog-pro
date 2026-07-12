@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../../localization/app_language.dart';
 import '../customers/customers_page.dart';
 import '../reports/reports_page.dart';
 import '../settings/settings_page.dart';
@@ -20,8 +20,8 @@ class DashboardPage extends StatelessWidget {
         children: [
           const SizedBox(height: 20),
 
-          const Text(
-            "Willkommen",
+          Text(
+            AppLanguage.instance.strings.welcome,
             style: TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.bold,
@@ -33,32 +33,32 @@ class DashboardPage extends StatelessWidget {
           _menuCard(
             context,
             icon: Icons.description,
-            title: "Arbeitsbericht erstellen",
-            subtitle: "Neuen Bericht beginnen",
+            title: AppLanguage.instance.strings.newWorkReport,
+            subtitle: AppLanguage.instance.strings.newReportSubtitle,
             page: const NewWorkReportPage(),
           ),
 
           _menuCard(
             context,
             icon: Icons.folder,
-            title: "Berichte",
-            subtitle: "Vorhandene Berichte ansehen",
+            title: AppLanguage.instance.strings.reports,
+            subtitle: AppLanguage.instance.strings.reportsSubtitle,
             page: const ReportsPage(),
           ),
 
           _menuCard(
             context,
             icon: Icons.people,
-            title: "Kunden",
-            subtitle: "Kunden verwalten",
+            title: AppLanguage.instance.strings.customers,
+            subtitle: AppLanguage.instance.strings.customersSubtitle,
             page: const CustomersPage(),
           ),
 
           _menuCard(
             context,
             icon: Icons.settings,
-            title: "Einstellungen",
-            subtitle: "Sprache und Optionen",
+            title: AppLanguage.instance.strings.settings,
+            subtitle: AppLanguage.instance.strings.settingsSubtitle,
             page: const SettingsPage(),
           ),
 

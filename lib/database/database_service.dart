@@ -19,8 +19,9 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 4,
       onCreate: (db, version) async {
+        // Kunden
         await db.execute("""
           CREATE TABLE customers(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,33 +29,78 @@ class DatabaseService {
           )
         """);
 
+        // Firma
+        await db.execute("""
+          CREATE TABLE company(
+            id INTEGER PRIMARY KEY,
+            companyName TEXT,
+            contactPerson TEXT,
+            street TEXT,
+            zipCode TEXT,
+            city TEXT,
+            phone TEXT,
+            mobile TEXT,
+            email TEXT,
+            website TEXT,
+            logoPath TEXT
+          )
+        """);
+
+        // Wochenbericht (Kopf)
         await db.execute("""
           CREATE TABLE work_reports(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
             customerId INTEGER NOT NULL,
             constructionSite TEXT NOT NULL,
-            startTime TEXT NOT NULL,
-            endTime TEXT NOT NULL,
-            breakMinutes INTEGER NOT NULL,
-            activity TEXT NOT NULL,
+            calendarWeek INTEGER NOT NULL,
+            year INTEGER NOT NULL,
+            createdAt TEXT NOT NULL,
             FOREIGN KEY(customerId) REFERENCES customers(id)
           )
         """);
+
+        // Tage eines Berichtes
+        await db.execute("""
+          CREATE TABLE work_report_days(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            reportId INTEGER NOT NULL,
+            weekday INTEGER NOT NULL,
+            startTime TEXT,
+            endTime TEXT,
+            breakMinutes INTEGER,
+            activity TEXT,
+            FOREIGN KEY(reportId) REFERENCES work_reports(id)
+          )
+        """);
       },
+
       onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
+        if (oldVersion < 4) {
+          await db.execute("DROP TABLE IF EXISTS work_reports;");
+          await db.execute("DROP TABLE IF EXISTS work_report_days;");
+
           await db.execute("""
             CREATE TABLE work_reports(
               id INTEGER PRIMARY KEY AUTOINCREMENT,
-              date TEXT NOT NULL,
               customerId INTEGER NOT NULL,
               constructionSite TEXT NOT NULL,
-              startTime TEXT NOT NULL,
-              endTime TEXT NOT NULL,
-              breakMinutes INTEGER NOT NULL,
-              activity TEXT NOT NULL,
+              calendarWeek INTEGER NOT NULL,
+              year INTEGER NOT NULL,
+              createdAt TEXT NOT NULL,
               FOREIGN KEY(customerId) REFERENCES customers(id)
+            )
+          """);
+
+          await db.execute("""
+            CREATE TABLE work_report_days(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              reportId INTEGER NOT NULL,
+              weekday INTEGER NOT NULL,
+              startTime TEXT,
+              endTime TEXT,
+              breakMinutes INTEGER,
+              activity TEXT,
+              FOREIGN KEY(reportId) REFERENCES work_reports(id)
             )
           """);
         }
