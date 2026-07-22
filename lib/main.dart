@@ -9,9 +9,5 @@ Future<void> main() async {
 
   await AppLanguage.instance.init();
 
-  runApp(
-    RestartWidget(
-      child: const WorkLogProApp(),
-    ),
-  );
+  runApp(RestartWidget(child: const WorkLogProApp()));
 }

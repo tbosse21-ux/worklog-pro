@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../database/customer_repository.dart';
+import '../../localization/app_language.dart';
 import '../../models/customer.dart';
 import 'new_customer_page.dart';
 
@@ -59,21 +60,23 @@ class _CustomersPageState extends State<CustomersPage> {
   }
 
   Future<void> _deleteCustomer(Customer customer) async {
+    final t = AppLanguage.instance.strings;
+
     final delete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Kunde löschen"),
+        title: Text(t.deleteCustomerTitle),
         content: Text(
-          'Soll "${customer.name}" wirklich gelöscht werden?',
+          t.deleteCustomerConfirm.replaceAll('{name}', customer.name),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Abbrechen"),
+            child: Text(t.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Löschen"),
+            child: Text(t.delete),
           ),
         ],
       ),
@@ -97,9 +100,11 @@ class _CustomersPageState extends State<CustomersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLanguage.instance.strings;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Kunden"),
+        title: Text(t.customers),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -108,7 +113,7 @@ class _CustomersPageState extends State<CustomersPage> {
             TextField(
               onChanged: _search,
               decoration: InputDecoration(
-                hintText: "Kunde suchen...",
+                hintText: t.searchCustomerHint,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -120,7 +125,7 @@ class _CustomersPageState extends State<CustomersPage> {
 
             ListTile(
               leading: const Icon(Icons.add),
-              title: const Text("Neuer Kunde"),
+              title: Text(t.newCustomer),
               onTap: _openNewCustomer,
             ),
 
@@ -128,10 +133,8 @@ class _CustomersPageState extends State<CustomersPage> {
 
             Expanded(
               child: _filteredCustomers.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "Noch keine Kunden vorhanden.",
-                      ),
+                  ? Center(
+                      child: Text(t.noCustomersYet),
                     )
                   : ListView.builder(
                       itemCount: _filteredCustomers.length,
@@ -141,9 +144,7 @@ class _CustomersPageState extends State<CustomersPage> {
                         return ListTile(
                           leading: const Icon(Icons.business),
                           title: Text(customer.name),
-                          subtitle: const Text(
-                            "Tippen = Bearbeiten | Lange drücken = Löschen",
-                          ),
+                          subtitle: Text(t.editDeleteHint),
                           onTap: () => _editCustomer(customer),
                           onLongPress: () => _deleteCustomer(customer),
                         );

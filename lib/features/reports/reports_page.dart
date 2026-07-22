@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../database/customer_repository.dart';
 import '../../database/work_report_repository.dart';
+import '../../database/work_report_day_repository.dart';
+import '../../localization/app_language.dart';
 import '../../models/customer.dart';
 import '../../models/work_report.dart';
+import '../../models/work_report_day.dart';
+import '../../services/pdf_service.dart';
 import '../work_reports/new_work_report_page.dart';
+import '../work_reports/new_week_report_page.dart';
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -17,9 +22,11 @@ class _ReportsPageState extends State<ReportsPage> {
   final WorkReportRepository _workReportRepository = WorkReportRepository();
 
   final CustomerRepository _customerRepository = CustomerRepository();
+  final WorkReportDayRepository _dayRepository = WorkReportDayRepository();
 
   List<WorkReport> _reports = [];
   final Map<int, Customer> _customers = {};
+  final Map<int, List<WorkReportDay>> _weekDays = {};
 
   @override
   void initState() {
@@ -40,6 +47,11 @@ class _ReportsPageState extends State<ReportsPage> {
           _customers[report.customerId] = customer;
         }
       }
+
+      if (report.isWeekReport && report.id != null) {
+        _weekDays[report.id!] =
+            await _dayRepository.getByReportId(report.id!);
+      }
     }
 
     setState(() {
@@ -56,6 +68,8 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   String _workingTime(WorkReport report) {
+    final t = AppLanguage.instance.strings;
+
     final start = report.startTime.split(":");
     final end = report.endTime.split(":");
 
@@ -68,21 +82,58 @@ class _ReportsPageState extends State<ReportsPage> {
     final hours = minutes ~/ 60;
     final mins = minutes % 60;
 
-    return "$hours Std. ${mins.toString().padLeft(2, '0')} Min.";
+    return "$hours ${t.hoursShort} ${mins.toString().padLeft(2, '0')} ${t.minutesShort}.";
+  }
+
+  String _weekWorkingTime(WorkReport report) {
+    final t = AppLanguage.instance.strings;
+
+    final days = _weekDays[report.id] ?? [];
+
+    final total = days.fold<Duration>(
+      Duration.zero,
+      (sum, day) => sum + Duration(minutes: (day.hours * 60).round()),
+    );
+
+    final hours = total.inHours;
+    final mins = total.inMinutes.remainder(60);
+
+    return "$hours ${t.hoursShort} ${mins.toString().padLeft(2, '0')} ${t.minutesShort}.";
+  }
+
+  Future<void> _handlePdf(
+    BuildContext context,
+    int reportId,
+    Future<void> Function(int) action,
+  ) async {
+    final t = AppLanguage.instance.strings;
+
+    try {
+      await action(reportId);
+    } catch (_) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.pdfError)),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLanguage.instance.strings;
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Berichte")),
+      appBar: AppBar(title: Text(t.reports)),
       body: _reports.isEmpty
-          ? const Center(child: Text("Noch keine Arbeitsberichte vorhanden."))
+          ? Center(child: Text(t.noReportsYet))
           : ListView.builder(
               itemCount: _reports.length,
               itemBuilder: (context, index) {
                 final report = _reports[index];
 
                 final customer = _customers[report.customerId];
+                final isWeek = report.isWeekReport;
 
                 return Card(
                   margin: const EdgeInsets.symmetric(
@@ -90,22 +141,56 @@ class _ReportsPageState extends State<ReportsPage> {
                     vertical: 6,
                   ),
                   child: ListTile(
-                    leading: const Icon(Icons.description),
-                    title: Text(customer?.name ?? "Unbekannter Kunde"),
+                    leading: Icon(
+                      isWeek ? Icons.view_week : Icons.description,
+                    ),
+                    title: Text(customer?.name ?? t.unknownCustomer),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_formatDate(report.date)),
+                        Text(
+                          isWeek
+                              ? "${t.weekFromPrefix} ${_formatDate(report.date)}"
+                              : _formatDate(report.date),
+                        ),
                         Text(report.constructionSite),
-                        Text(_workingTime(report)),
+                        Text(
+                          isWeek
+                              ? _weekWorkingTime(report)
+                              : _workingTime(report),
+                        ),
                       ],
                     ),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: t.printReport,
+                          icon: const Icon(Icons.print),
+                          onPressed: () => _handlePdf(
+                            context,
+                            report.id!,
+                            PdfService.preview,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: t.shareReport,
+                          icon: const Icon(Icons.share),
+                          onPressed: () => _handlePdf(
+                            context,
+                            report.id!,
+                            PdfService.share,
+                          ),
+                        ),
+                      ],
+                    ),
                     onTap: () async {
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => NewWorkReportPage(report: report),
+                          builder: (_) => isWeek
+                              ? NewWeekReportPage(report: report)
+                              : NewWorkReportPage(report: report),
                         ),
                       );
 

@@ -3,7 +3,7 @@ import '../../localization/app_language.dart';
 import '../customers/customers_page.dart';
 import '../reports/reports_page.dart';
 import '../settings/settings_page.dart';
-import '../work_reports/new_work_report_page.dart';
+import '../work_reports/report_type_selection_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -35,7 +35,7 @@ class DashboardPage extends StatelessWidget {
             icon: Icons.description,
             title: AppLanguage.instance.strings.newWorkReport,
             subtitle: AppLanguage.instance.strings.newReportSubtitle,
-            page: const NewWorkReportPage(),
+            page: const ReportTypeSelectionPage(),
           ),
 
           _menuCard(

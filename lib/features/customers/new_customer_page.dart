@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../database/customer_repository.dart';
+import '../../localization/app_language.dart';
 import '../../models/customer.dart';
 
 class NewCustomerPage extends StatefulWidget {
@@ -37,12 +38,13 @@ class _NewCustomerPageState extends State<NewCustomerPage> {
   }
 
   Future<void> _saveCustomer() async {
+    final t = AppLanguage.instance.strings;
     final name = _nameController.text.trim();
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Bitte Kunde / Firma eingeben."),
+        SnackBar(
+          content: Text(t.pleaseEnterCustomer),
         ),
       );
       return;
@@ -67,10 +69,12 @@ class _NewCustomerPageState extends State<NewCustomerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLanguage.instance.strings;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _isEdit ? "Kunde bearbeiten" : "Neuer Kunde",
+          _isEdit ? t.editCustomerTitle : t.newCustomerTitle,
         ),
       ),
       body: Padding(
@@ -80,9 +84,9 @@ class _NewCustomerPageState extends State<NewCustomerPage> {
             TextField(
               controller: _nameController,
               autofocus: true,
-              decoration: const InputDecoration(
-                labelText: "Kunde / Firma *",
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: t.customerNameLabel,
+                border: const OutlineInputBorder(),
               ),
             ),
             const Spacer(),
@@ -92,7 +96,7 @@ class _NewCustomerPageState extends State<NewCustomerPage> {
               child: ElevatedButton(
                 onPressed: _saveCustomer,
                 child: Text(
-                  _isEdit ? "Änderungen speichern" : "Speichern",
+                  _isEdit ? t.saveChanges : t.save,
                   style: const TextStyle(fontSize: 18),
                 ),
               ),

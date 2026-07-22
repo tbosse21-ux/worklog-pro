@@ -25,19 +25,15 @@ class WorkReportDay {
     final start = startTime.split(":");
     final end = endTime.split(":");
 
-    final startMinutes =
-        int.parse(start[0]) * 60 + int.parse(start[1]);
+    final startMinutes = int.parse(start[0]) * 60 + int.parse(start[1]);
 
-    final endMinutes =
-        int.parse(end[0]) * 60 + int.parse(end[1]);
+    final endMinutes = int.parse(end[0]) * 60 + int.parse(end[1]);
 
     return (endMinutes - startMinutes - breakMinutes) / 60;
   }
 
   bool get isFilled =>
-      startTime.isNotEmpty ||
-      endTime.isNotEmpty ||
-      activity.isNotEmpty;
+      startTime.isNotEmpty || endTime.isNotEmpty || activity.isNotEmpty;
 
   Map<String, dynamic> toMap() {
     return {

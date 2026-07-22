@@ -17,10 +17,7 @@ class CompanyRepository {
   Future<Company?> load() async {
     final db = await DatabaseService.database;
 
-    final result = await db.query(
-      'company',
-      limit: 1,
-    );
+    final result = await db.query('company', limit: 1);
 
     if (result.isEmpty) {
       return null;

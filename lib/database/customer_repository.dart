@@ -5,19 +5,13 @@ class CustomerRepository {
   Future<void> insert(Customer customer) async {
     final db = await DatabaseService.database;
 
-    await db.insert(
-      'customers',
-      customer.toMap(),
-    );
+    await db.insert('customers', customer.toMap());
   }
 
   Future<List<Customer>> getAll() async {
     final db = await DatabaseService.database;
 
-    final maps = await db.query(
-      'customers',
-      orderBy: 'name ASC',
-    );
+    final maps = await db.query('customers', orderBy: 'name ASC');
 
     return maps.map((e) => Customer.fromMap(e)).toList();
   }
@@ -67,12 +61,10 @@ class CustomerRepository {
   Future<void> delete(int id) async {
     final db = await DatabaseService.database;
 
-    await db.delete(
-      'customers',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }  Future<Customer?> findByName(String name) async {
+    await db.delete('customers', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<Customer?> findByName(String name) async {
     final db = await DatabaseService.database;
 
     final maps = await db.query(
@@ -96,9 +88,7 @@ class CustomerRepository {
       return existing;
     }
 
-    final customer = Customer(
-      name: name.trim(),
-    );
+    final customer = Customer(name: name.trim());
 
     await insert(customer);
 

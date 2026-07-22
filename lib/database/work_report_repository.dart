@@ -5,10 +5,7 @@ class WorkReportRepository {
   Future<int> insert(WorkReport workReport) async {
     final db = await DatabaseService.database;
 
-    return await db.insert(
-      'work_reports',
-      workReport.toMap(),
-    );
+    return await db.insert('work_reports', workReport.toMap());
   }
 
   Future<void> update(WorkReport workReport) async {
@@ -42,14 +39,9 @@ class WorkReportRepository {
   Future<List<WorkReport>> getAll() async {
     final db = await DatabaseService.database;
 
-    final maps = await db.query(
-      'work_reports',
-      orderBy: 'date DESC',
-    );
+    final maps = await db.query('work_reports', orderBy: 'date DESC');
 
-    return maps
-        .map((e) => WorkReport.fromMap(e))
-        .toList();
+    return maps.map((e) => WorkReport.fromMap(e)).toList();
   }
 
   Future<List<WorkReport>> getByCustomer(int customerId) async {
@@ -62,9 +54,7 @@ class WorkReportRepository {
       orderBy: 'date DESC',
     );
 
-    return maps
-        .map((e) => WorkReport.fromMap(e))
-        .toList();
+    return maps.map((e) => WorkReport.fromMap(e)).toList();
   }
 
   Future<List<String>> getConstructionSites(int customerId) async {
@@ -80,18 +70,12 @@ class WorkReportRepository {
       [customerId],
     );
 
-    return maps
-        .map((e) => e['constructionSite'] as String)
-        .toList();
+    return maps.map((e) => e['constructionSite'] as String).toList();
   }
 
   Future<void> delete(int id) async {
     final db = await DatabaseService.database;
 
-    await db.delete(
-      'work_reports',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('work_reports', where: 'id = ?', whereArgs: [id]);
   }
 }

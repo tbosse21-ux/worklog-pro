@@ -50,41 +50,44 @@ class _SettingsPageState extends State<SettingsPage> {
       _language = language;
     });
 
+    final t = AppLanguage.instance.strings;
+
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Text("Sprache geändert"),
-        content: const Text(
-          "Die App wird jetzt neu geladen, damit alle Änderungen übernommen werden.",
-        ),
+        title: Text(t.languageChangedTitle),
+        content: Text(t.languageChangedContent),
         actions: [
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
             },
-            child: const Text("OK"),
+            child: Text(t.ok),
           ),
         ],
       ),
     );
 
+    if (!mounted) return;
     RestartWidget.restartApp(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLanguage.instance.strings;
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Einstellungen")),
+      appBar: AppBar(title: Text(t.settings)),
       body: ListView(
         children: [
           const SizedBox(height: 12),
 
-          const ListTile(
-            leading: Icon(Icons.language),
+          ListTile(
+            leading: const Icon(Icons.language),
             title: Text(
-              "Sprache",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              t.language,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
 
@@ -125,8 +128,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
           ListTile(
             leading: const Icon(Icons.business),
-            title: Text(AppLanguage.instance.strings.companyData),
-            subtitle: Text(AppLanguage.instance.strings.editCompanyData),
+            title: Text(t.companyData),
+            subtitle: Text(t.editCompanyData),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.push(
@@ -136,16 +139,16 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           ),
 
-          const ListTile(
-            leading: Icon(Icons.picture_as_pdf),
-            title: Text("PDF"),
-            subtitle: Text("kommt später"),
+          ListTile(
+            leading: const Icon(Icons.picture_as_pdf),
+            title: Text(t.pdfExportTitle),
+            subtitle: Text(t.pdfExportSubtitle),
           ),
 
-          const ListTile(
-            leading: Icon(Icons.save),
-            title: Text("Backup"),
-            subtitle: Text("kommt später"),
+          ListTile(
+            leading: const Icon(Icons.save),
+            title: Text(t.backupTitle),
+            subtitle: Text(t.backupSubtitle),
           ),
         ],
       ),

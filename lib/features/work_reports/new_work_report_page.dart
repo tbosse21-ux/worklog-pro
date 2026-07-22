@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../database/customer_repository.dart';
+import '../../localization/app_language.dart';
 import '../../models/customer.dart';
 import '../../database/work_report_repository.dart';
 import '../../models/work_report.dart';
@@ -23,17 +24,23 @@ class _NewWorkReportPageState extends State<NewWorkReportPage> {
   Customer? _selectedCustomer;
   List<Customer> _customerSuggestions = [];
   List<String> _constructionSuggestions = [];
+
+  bool _showCustomerSuggestions = false;
+  bool _showConstructionSuggestions = false;
+
   bool get _isEditing => widget.report != null;
+
   bool get _customerExists {
-   return _customerSuggestions.any(
-     (customer) =>
-         customer.name.toLowerCase() ==
-         _customerController.text.trim().toLowerCase(),
-   );
- }
+    return _customerSuggestions.any(
+      (customer) =>
+          customer.name.toLowerCase() ==
+          _customerController.text.trim().toLowerCase(),
+    );
+  }
 
   final TextEditingController _customerController = TextEditingController();
-  final TextEditingController _constructionSiteController = TextEditingController();
+  final TextEditingController _constructionSiteController =
+      TextEditingController();
   final TextEditingController _activityController = TextEditingController();
 
   DateTime _selectedDate = DateTime.now();
@@ -42,55 +49,51 @@ class _NewWorkReportPageState extends State<NewWorkReportPage> {
 
   int _breakMinutes = 30;
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  if (widget.report != null) {
-    _loadReport();
+    if (widget.report != null) {
+      _loadReport();
+    }
   }
-}
 
-Future<void> _loadReport() async {
-  final report = widget.report!;
+  Future<void> _loadReport() async {
+    final report = widget.report!;
 
-  final customer =
-      await _customerRepository.getCustomerById(
-    report.customerId,
-  );
-
-  setState(() {
-    _selectedCustomer = customer;
-
-    _customerController.text =
-        customer?.name ?? "";
-
-    _constructionSiteController.text =
-        report.constructionSite;
-
-    _activityController.text =
-        report.activity;
-
-    _selectedDate = DateTime.parse(report.date);
-
-    final start = report.startTime.split(":");
-    _startTime = TimeOfDay(
-      hour: int.parse(start[0]),
-      minute: int.parse(start[1]),
+    final customer = await _customerRepository.getCustomerById(
+      report.customerId,
     );
 
-    final end = report.endTime.split(":");
-    _endTime = TimeOfDay(
-      hour: int.parse(end[0]),
-      minute: int.parse(end[1]),
-    );
+    setState(() {
+      _selectedCustomer = customer;
 
-    _breakMinutes = report.breakMinutes;
-  });
-}
+      _customerController.text = customer?.name ?? "";
 
-@override
-void dispose() {
+      _constructionSiteController.text = report.constructionSite;
+
+      _activityController.text = report.activity;
+
+      _selectedDate = DateTime.parse(report.date);
+
+      final start = report.startTime.split(":");
+      _startTime = TimeOfDay(
+        hour: int.parse(start[0]),
+        minute: int.parse(start[1]),
+      );
+
+      final end = report.endTime.split(":");
+      _endTime = TimeOfDay(
+        hour: int.parse(end[0]),
+        minute: int.parse(end[1]),
+      );
+
+      _breakMinutes = report.breakMinutes;
+    });
+  }
+
+  @override
+  void dispose() {
     _customerController.dispose();
     _constructionSiteController.dispose();
     _activityController.dispose();
@@ -153,60 +156,67 @@ void dispose() {
 
   String _formatTime(TimeOfDay t) =>
       "${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}";
-  
+
   Future<void> _searchCustomers(String text) async {
-   if (text.trim().isEmpty) {
-      setState(() {
-        _customerSuggestions = [];
-      });
+    setState(() => _showCustomerSuggestions = text.trim().isNotEmpty);
+
+    if (text.trim().isEmpty) {
+      setState(() => _customerSuggestions = []);
       return;
-   }
+    }
 
-    final customers =
-      await _customerRepository.searchCustomers(text);
+    final customers = await _customerRepository.searchCustomers(text);
 
-    setState(() {
-      _customerSuggestions = customers;
-    });
+    setState(() => _customerSuggestions = customers);
   }
-  Future<void> _searchConstructionSites(
-    String text,
-  ) async {
+
+  Future<void> _searchConstructionSites(String text) async {
+    setState(() => _showConstructionSuggestions = text.trim().isNotEmpty);
+
     if (_selectedCustomer == null) {
       return;
     }
 
-    final sites =
-       await _workReportRepository.getConstructionSites(
-     _selectedCustomer!.id!,
+    final sites = await _workReportRepository.getConstructionSites(
+      _selectedCustomer!.id!,
     );
 
     setState(() {
       _constructionSuggestions = sites
-        .where(
-          (site) => site
-             .toLowerCase()
-             .contains(text.toLowerCase()),
-        )
-        .toList();
+          .where(
+            (site) => site.toLowerCase().contains(text.toLowerCase()),
+          )
+          .toList();
     });
   }
+
   Future<void> _saveWorkReport() async {
+    final t = AppLanguage.instance.strings;
+
+    // Falls der Nutzer einen Namen getippt, aber keinen Vorschlag
+    // angetippt hat: Kunden trotzdem automatisch anlegen/finden.
+    if (_selectedCustomer == null &&
+        _customerController.text.trim().isNotEmpty) {
+      _selectedCustomer =
+          await _customerRepository.getOrCreate(_customerController.text);
+    }
+
     if (_selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Bitte Kunde auswählen.")),
+        SnackBar(content: Text(t.pleaseSelectCustomer)),
       );
       return;
     }
 
     if (_constructionSiteController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Bitte Baustelle eingeben.")),
+        SnackBar(content: Text(t.pleaseEnterSite)),
       );
       return;
     }
 
     final report = WorkReport(
+      reportType: 'day',
       date: _selectedDate.toIso8601String(),
       customerId: _selectedCustomer!.id!,
       constructionSite: _constructionSiteController.text.trim(),
@@ -217,145 +227,149 @@ void dispose() {
     );
 
     if (_isEditing) {
-     await _workReportRepository.update(
-      report.copyWith(
-       id: widget.report!.id,
-      ),
-    );
-  } else {
-    await _workReportRepository.insert(report);
-  }
+      await _workReportRepository.update(
+        report.copyWith(
+          id: widget.report!.id,
+        ),
+      );
+    } else {
+      await _workReportRepository.insert(report);
+    }
 
     if (!mounted) return;
     Navigator.pop(context, true);
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final t = AppLanguage.instance.strings;
     final h = _workingDuration.inHours;
     final m = _workingDuration.inMinutes.remainder(60);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Neuer Arbeitsbericht")),
+      appBar: AppBar(title: Text(t.newWorkReport)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           ListTile(
             leading: const Icon(Icons.calendar_month),
-            title: const Text("Datum"),
+            title: Text(t.date),
             subtitle: Text(_formatDate(_selectedDate)),
             onTap: _pickDate,
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _customerController,
-
             onChanged: _searchCustomers,
             onTapOutside: (_) {
-           setState(() {
-             _customerSuggestions.clear();
-           });
+              setState(() {
+                _customerSuggestions.clear();
+                _showCustomerSuggestions = false;
+              });
 
-           FocusScope.of(context).unfocus();
-         },
+              FocusScope.of(context).unfocus();
+            },
             onEditingComplete: () async {
-             if (_customerController.text.trim().isEmpty) {
-               return;
-             }
+              if (_customerController.text.trim().isEmpty) {
+                return;
+              }
 
-             final customer = await _customerRepository.getOrCreate(
-               _customerController.text,
-             );
+              final customer = await _customerRepository.getOrCreate(
+                _customerController.text,
+              );
 
-             setState(() {
-               _selectedCustomer = customer;
-               _customerController.text = customer.name;
-             });
+              setState(() {
+                _selectedCustomer = customer;
+                _customerController.text = customer.name;
+                _customerSuggestions.clear();
+                _showCustomerSuggestions = false;
+              });
 
-             FocusScope.of(context).nextFocus();
-           },
-            decoration: const InputDecoration(
-              labelText: "Kunde / Firma",
-              border: OutlineInputBorder(),
+              FocusScope.of(context).nextFocus();
+            },
+            decoration: InputDecoration(
+              labelText: t.customer,
+              border: const OutlineInputBorder(),
             ),
           ),
-          if (_customerSuggestions.isNotEmpty ||
-              (_customerController.text.trim().isNotEmpty &&
-                  !_customerExists))
+          if (_showCustomerSuggestions &&
+              _customerController.text.trim().isNotEmpty)
             Card(
-               margin: const EdgeInsets.only(top: 8),
-               child: ListView.builder(
-                 shrinkWrap: true,
-                 physics: const NeverScrollableScrollPhysics(),
-                 itemCount: _customerSuggestions.length +
-                     (_customerExists ? 0 : 1),
-                 itemBuilder: (context, index) {
-                   if (index == _customerSuggestions.length) {
-                     return ListTile(
-                       leading: const Icon(Icons.add),
-                       title: Text(
-                          'Neuen Kunden "${_customerController.text}" anlegen',
-                       ),
-                       onTap: () async {
-                         final customer =
-                              await _customerRepository.getOrCreate(
-                           _customerController.text,
-                         );
+              margin: const EdgeInsets.only(top: 8),
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _customerSuggestions.length +
+                    (_customerExists ? 0 : 1),
+                itemBuilder: (context, index) {
+                  if (index == _customerSuggestions.length) {
+                    return ListTile(
+                      leading: const Icon(Icons.add),
+                      title: Text(
+                        t.createNewCustomer.replaceAll(
+                          '{name}',
+                          _customerController.text,
+                        ),
+                      ),
+                      onTap: () async {
+                        final customer =
+                            await _customerRepository.getOrCreate(
+                          _customerController.text,
+                        );
 
-                          setState(() {
-                              _selectedCustomer = customer;
-                            _customerController.text = customer.name;
-                            _customerSuggestions.clear();
-                          });
+                        setState(() {
+                          _selectedCustomer = customer;
+                          _customerController.text = customer.name;
+                          _customerSuggestions.clear();
+                          _showCustomerSuggestions = false;
+                        });
 
-                          FocusScope.of(context).nextFocus();
-                        },
-                     );
-                   }
+                        FocusScope.of(context).nextFocus();
+                      },
+                    );
+                  }
 
-                   final customer = _customerSuggestions[index];
+                  final customer = _customerSuggestions[index];
 
-                   return ListTile(
-                     leading: const Icon(Icons.business),
-                     title: Text(customer.name),
-                     onTap: () {
-                       setState(() {
-                         _selectedCustomer = customer;
-                         _customerController.text = customer.name;
-                         _customerSuggestions.clear();
-                       });
+                  return ListTile(
+                    leading: const Icon(Icons.business),
+                    title: Text(customer.name),
+                    onTap: () {
+                      setState(() {
+                        _selectedCustomer = customer;
+                        _customerController.text = customer.name;
+                        _customerSuggestions.clear();
+                        _showCustomerSuggestions = false;
+                      });
 
-                       FocusScope.of(context).nextFocus();
-                     },
-                   );
-                 },
-               ),
-             ),
+                      FocusScope.of(context).nextFocus();
+                    },
+                  );
+                },
+              ),
+            ),
           const SizedBox(height: 16),
 
-         TextField(
-           controller: _constructionSiteController,
+          TextField(
+            controller: _constructionSiteController,
+            onChanged: _searchConstructionSites,
+            onTapOutside: (_) {
+              setState(() {
+                _constructionSuggestions.clear();
+                _showConstructionSuggestions = false;
+              });
 
-           onChanged: _searchConstructionSites,
+              FocusScope.of(context).unfocus();
+            },
+            decoration: InputDecoration(
+              labelText: t.constructionSite,
+              border: const OutlineInputBorder(),
+            ),
+          ),
 
-           onTapOutside: (_) {
-             setState(() {
-               _constructionSuggestions.clear();
-             });
-
-             FocusScope.of(context).unfocus();
-           },
-
-            decoration: const InputDecoration(
-             labelText: "Baustelle",
-             border: OutlineInputBorder(),
-           ),
-         ),
-
-          if (_constructionSuggestions.isNotEmpty ||
+          if (_showConstructionSuggestions &&
               _constructionSiteController.text.trim().isNotEmpty)
-           Card(
+            Card(
               margin: const EdgeInsets.only(top: 8),
               child: ListView.builder(
                 shrinkWrap: true,
@@ -366,35 +380,40 @@ void dispose() {
                     return ListTile(
                       leading: const Icon(Icons.add_location_alt),
                       title: Text(
-                        'Neue Baustelle "${_constructionSiteController.text}"',
+                        t.createNewSite.replaceAll(
+                          '{name}',
+                          _constructionSiteController.text,
+                        ),
                       ),
                       onTap: () {
-                        FocusScope.of(context).nextFocus();
-
                         setState(() {
                           _constructionSuggestions.clear();
-                       });
-                     },
-                   );
-                 }
+                          _showConstructionSuggestions = false;
+                        });
 
-                 final site = _constructionSuggestions[index];
+                        FocusScope.of(context).nextFocus();
+                      },
+                    );
+                  }
 
-                 return ListTile(
-                   leading: const Icon(Icons.location_on),
-                   title: Text(site),
-                   onTap: () {
-                     setState(() {
+                  final site = _constructionSuggestions[index];
+
+                  return ListTile(
+                    leading: const Icon(Icons.location_on),
+                    title: Text(site),
+                    onTap: () {
+                      setState(() {
                         _constructionSiteController.text = site;
                         _constructionSuggestions.clear();
-                     });
+                        _showConstructionSuggestions = false;
+                      });
 
                       FocusScope.of(context).nextFocus();
                     },
-                 );
-               },
-             ),
-           ),
+                  );
+                },
+              ),
+            ),
 
           const SizedBox(height: 16),
 
@@ -403,7 +422,7 @@ void dispose() {
               Expanded(
                 child: Card(
                   child: ListTile(
-                    title: const Text("Beginn"),
+                    title: Text(t.start),
                     subtitle: Text(_formatTime(_startTime)),
                     onTap: _pickStartTime,
                   ),
@@ -413,7 +432,7 @@ void dispose() {
               Expanded(
                 child: Card(
                   child: ListTile(
-                    title: const Text("Ende"),
+                    title: Text(t.end),
                     subtitle: Text(_formatTime(_endTime)),
                     onTap: _pickEndTime,
                   ),
@@ -424,16 +443,17 @@ void dispose() {
           const SizedBox(height: 16),
           Card(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
-                  const Text("Pause", style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(t.pause, style: const TextStyle(fontWeight: FontWeight.bold)),
                   const Spacer(),
                   IconButton(
                     onPressed: _decreaseBreak,
                     icon: const Icon(Icons.remove_circle_outline),
                   ),
-                  Text("$_breakMinutes Min"),
+                  Text("$_breakMinutes ${t.minutesShort}"),
                   IconButton(
                     onPressed: _increaseBreak,
                     icon: const Icon(Icons.add_circle_outline),
@@ -446,9 +466,9 @@ void dispose() {
           Card(
             child: ListTile(
               leading: const Icon(Icons.schedule),
-              title: const Text("Arbeitszeit"),
+              title: Text(t.workingTime),
               trailing: Text(
-                "$h Std. ${m.toString().padLeft(2, '0')} Min.",
+                "$h ${t.hoursShort} ${m.toString().padLeft(2, '0')} ${t.minutesShort}.",
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -457,83 +477,75 @@ void dispose() {
           TextField(
             controller: _activityController,
             maxLines: 6,
-            decoration: const InputDecoration(
-              labelText: "Tätigkeit",
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: t.activity,
+              border: const OutlineInputBorder(),
               alignLabelWithHint: true,
             ),
           ),
           const SizedBox(height: 24),
           Column(
-           children: [
+            children: [
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
-                 onPressed: _saveWorkReport,
-                 child: Text(
-                   _isEditing
-                       ? "Änderungen speichern"
-                        : "Speichern",
-                 ),
-               ),
+                  onPressed: _saveWorkReport,
+                  child: Text(
+                    _isEditing ? t.saveChanges : t.save,
+                  ),
+                ),
               ),
-
               if (_isEditing) ...[
                 const SizedBox(height: 12),
-
                 SizedBox(
                   width: double.infinity,
                   height: 55,
                   child: OutlinedButton.icon(
-                   icon: const Icon(Icons.delete),
-                   label: const Text("Bericht löschen"),
-                   style: OutlinedButton.styleFrom(
-                     foregroundColor: Colors.red,
+                    icon: const Icon(Icons.delete),
+                    label: Text(t.deleteReport),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
                     ),
                     onPressed: () async {
-                     final delete = await showDialog<bool>(
-                       context: context,
-                       builder: (context) {
-                         return AlertDialog(
-                            title: const Text("Bericht löschen"),
-                           content: const Text(
-                              "Möchtest du diesen Arbeitsbericht wirklich löschen?",
-                            ),
-                           actions: [
+                      final delete = await showDialog<bool>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text(t.deleteReportConfirmTitle),
+                            content: Text(t.deleteReportConfirmContent),
+                            actions: [
                               TextButton(
                                 onPressed: () {
-                                 Navigator.pop(context, false);
+                                  Navigator.pop(context, false);
                                 },
-                                child: const Text("Abbrechen"),
+                                child: Text(t.cancel),
                               ),
                               FilledButton(
                                 onPressed: () {
-                                 Navigator.pop(context, true);
-                               },
-                               child: const Text("Löschen"),
-                             ),
+                                  Navigator.pop(context, true);
+                                },
+                                child: Text(t.delete),
+                              ),
                             ],
-                         );
-                       },
-                     );
+                          );
+                        },
+                      );
 
-                    if (delete != true) return;
-                    await _workReportRepository.delete(
-                     widget.report!.id!,
-                    );
+                      if (delete != true) return;
+                      await _workReportRepository.delete(
+                        widget.report!.id!,
+                      );
 
-                    if (!mounted) return;
+                      if (!mounted) return;
 
-                    Navigator.pop(context, true);
+                      Navigator.pop(context, true);
                     },
                   ),
                 ),
               ],
-            
             ],
           ),
-        
         ],
       ),
     );

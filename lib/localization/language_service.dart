@@ -31,8 +31,7 @@ class LanguageService {
   static Future<void> loadLanguage() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final language =
-        prefs.getString(_key) ?? "Deutsch";
+    final language = prefs.getString(_key) ?? "Deutsch";
 
     await setLanguage(language);
   }

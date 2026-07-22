@@ -1,5 +1,6 @@
 class WorkReport {
   final int? id;
+  final String reportType; // 'day' oder 'week'
   final String date;
   final int customerId;
   final String constructionSite;
@@ -10,6 +11,7 @@ class WorkReport {
 
   const WorkReport({
     this.id,
+    this.reportType = 'day',
     required this.date,
     required this.customerId,
     required this.constructionSite,
@@ -19,8 +21,11 @@ class WorkReport {
     required this.activity,
   });
 
+  bool get isWeekReport => reportType == 'week';
+
   WorkReport copyWith({
     int? id,
+    String? reportType,
     String? date,
     int? customerId,
     String? constructionSite,
@@ -31,6 +36,7 @@ class WorkReport {
   }) {
     return WorkReport(
       id: id ?? this.id,
+      reportType: reportType ?? this.reportType,
       date: date ?? this.date,
       customerId: customerId ?? this.customerId,
       constructionSite: constructionSite ?? this.constructionSite,
@@ -44,6 +50,7 @@ class WorkReport {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'reportType': reportType,
       'date': date,
       'customerId': customerId,
       'constructionSite': constructionSite,
@@ -57,6 +64,7 @@ class WorkReport {
   factory WorkReport.fromMap(Map<String, dynamic> map) {
     return WorkReport(
       id: map['id'] as int?,
+      reportType: (map['reportType'] as String?) ?? 'day',
       date: map['date'] as String,
       customerId: map['customerId'] as int,
       constructionSite: map['constructionSite'] as String,
